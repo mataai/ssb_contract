@@ -1,0 +1,15 @@
+emplNumEmploye
+emplNom
+emplPrenom
+emplAdresse
+emplAppartement
+emplVille
+emplCodePostal
+emplTelephone
+emplPagerCell
+emplCourriel
+emplNaissance
+ipTauxHoraire
+ipTauxLesson
+ipPourcCommission
+Age	

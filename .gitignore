@@ -1,0 +1,5 @@
+output/
+input/
+dist
+build
+*.spec
