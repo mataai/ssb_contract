@@ -29,10 +29,9 @@ jobs:
         with:
           tag_name: ${{ github.event.head_commit.message }}
           release_name: ${{ github.event.head_commit.message }}
-          overwrite: true
           body: |
             Test Release v1.0.0
-          draft: false
+          draft: true
           prerelease: false
       - name: Upload Release Asset
         id: upload-release-asset
@@ -41,6 +40,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{steps.create_release.outputs.upload_url}}
-          asset_path: dist/qwiklab_badge_checker.exe
-          asset_name: Qwiklab-Badge-Checker-Windows-amd64.exe
-          asset_content_type: application/zip
+          asset_path: dist/
+          asset_name: main.exe
+          asset_content_type: application/exe
