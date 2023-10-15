@@ -34,7 +34,7 @@ jobs:
           draft: true
           prerelease: false
       - name: List Files
-        run: "ls dist && pwd"
+        run: "ls dist/main && pwd"
 
       - name: Upload Release Asset
         id: upload-release-asset
