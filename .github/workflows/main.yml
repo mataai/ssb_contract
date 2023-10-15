@@ -33,6 +33,9 @@ jobs:
             Test Release v1.0.0
           draft: true
           prerelease: false
+      - name: List Files
+        run: ls dist
+
       - name: Upload Release Asset
         id: upload-release-asset
         uses: actions/upload-release-asset@v1
