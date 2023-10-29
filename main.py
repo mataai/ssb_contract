@@ -1,10 +1,11 @@
-from tkinter import messagebox
-import openpyxl
 import csv
 import re
 import sys
+import openpyxl
 import win32api
+from pathlib import Path
 from docx import Document
+from tkinter import messagebox
 from tkinter import *  # from tkinter import Tk for Python 3.x
 from tkinter.filedialog import askopenfilename
 from tkinter.filedialog import askopenfilenames
@@ -20,6 +21,8 @@ printFiles = False
 
 encapsulation_char = "$"
 
+def createOutputIfNotExist():
+    Path("./output").mkdir(parents=True, exist_ok=True)
 
 def loadData():
     Tk().withdraw()  # we don't want a full GUI, so keep the root window from appearing
@@ -44,7 +47,7 @@ def loadData():
     # Take the first row that contains the header as guide for what the columns are
     headers = data.pop(0)
     for header in headers:
-        dataListBox.insert(END, header)
+        dataListBox.insert(END, "$"+header+"$")
     window.update()
 
     templatesBtn = Button(text="Load Templates", command=loadTemplates)
@@ -82,54 +85,6 @@ def loadTemplates():
     global generateBtn
     generateBtn = Button(text="Generate", command=executeUpdate)
     generateBtn.grid(row=0, column=2)
-
-
-# def updatePDF(filePath: str, employe: [str]):
-#     # Open the existing PDF file
-#     with open(filePath, "rb") as pdf_file:
-#         pdf_reader = PdfReader(pdf_file)
-#         pdf_writer = PdfWriter()
-
-#         # Iterate through each page in the PDF
-#         for page_num in range(len(pdf_reader.pages)):
-#             page = pdf_reader.pages[page_num]
-
-#             # Convert the page's text content to lowercase for case-insensitive search
-
-#             contents = page.get_contents().get_data()
-
-#             # Check if the page contains any of the headers from the CSV file which are used as replacement keys
-#             for key in headers:
-#                 comparer = encapsulation_char + key + encapsulation_char
-#                 new_value = employe[headers.index(key)]
-#                 # Replace the key with the new value from the employee data
-#                 if key == "emplNaissance":
-#                     new_value = employe[headers.index(key)]
-#                     new_value = "/".join(reversed(new_value.split("/")))
-#                 elif (
-#                     key == "ipTauxHoraire"
-#                     or key == "ipTauxLesson"
-#                     or key == "ipPourcCommission"
-#                 ):
-#                     new_value = employe[headers.index(key)] + "$"
-#                 elif (
-#                     key == "emplPagerCell"
-#                     and employe[headers.index("emplPagerCell")].strip() == ""
-#                 ):
-#                     new_value = employe[headers.index("emplTelephone")]
-#                 else:
-#                     new_value = employe[headers.index(key)]
-
-#                 contents = contents.replace(comparer.encode('utf-8'), new_value.encode('utf-8'))
-
-#             # Update the page's content
-#             page.get_contents().set_data(contents)
-#             pdf_writer.add_page(page)
-
-#         # Create the output PDF file
-#         output_file = "output/" + employe[headers.index("emplNumEmploye")] + ".pdf"
-#         with open(output_file, "wb") as output_pdf:
-#             pdf_writer.write(output_pdf)
 
 
 def updateWord(filePath, employe):
@@ -184,6 +139,8 @@ def updateXLSX(filePath, employe):
 
 
 def executeUpdate():
+    # create outputfolder if not exist
+    createOutputIfNotExist()
     # Itterate through the list of rows containing each employees data
     for employe in data:
         for template in templates:
