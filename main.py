@@ -1,11 +1,13 @@
 import csv
 import re
 import sys
+import tkinter
 import openpyxl
 import win32api
+import threading
 from pathlib import Path
 from docx import Document
-from tkinter import messagebox
+from tkinter import messagebox, ttk
 from tkinter import *  # from tkinter import Tk for Python 3.x
 from tkinter.filedialog import askopenfilename
 from tkinter.filedialog import askopenfilenames
@@ -137,24 +139,49 @@ def updateXLSX(filePath, employe):
     wb.save(outputFile)
     return outputFile
 
+def process_template(template, employe):
+    if template.endswith(".xlsx"):
+        updateXLSX(template, employe)
+    elif template.endswith(".docx"):
+        updateWord(template, employe)
+    # elif template.endswith(".pdf"):
+    #     outputFile = updatePDF(template, employe)
+    else:
+        messagebox.showerror("Error", "Invalid file format")
 
 def executeUpdate():
     # create outputfolder if not exist
     createOutputIfNotExist()
-    # Itterate through the list of rows containing each employees data
+    
+    def worker(template, employe, done_event, progress_var):
+        process_template(template, employe)
+        done_event.set()
+        progress_var.set(progress_var.get() + 1)
+
+    threads = []
+    done_events = []
+    total_tasks = len(data) * len(templates)
+    
+    # Create a progress bar
+    progress_var = tkinter.IntVar()
+    progress_bar = ttk.Progressbar(window, maximum=total_tasks, variable=progress_var)
+    progress_bar.grid(row=3, column=0, columnspan=2, pady=10)
+
+    # Iterate through the list of rows containing each employee's data
     for employe in data:
         for template in templates:
-            if template.endswith(".xlsx"):
-                outputFile = updateXLSX(template, employe)
-            elif template.endswith(".docx"):
-                outputFile = updateWord(template, employe)
-            # elif template.endswith(".pdf"):
-            #     outputFile = updatePDF(template, employe)
-            else:
-                messagebox("Invalid file format")
-                break
-        if printFiles and outputFile:
-            win32api.ShellExecute(0, "print", ".\\" + outputFile, None, ".", 0)
+            done_event = threading.Event()
+            done_events.append(done_event)
+            thread = threading.Thread(target=worker, args=(template, employe, done_event, progress_var))
+            threads.append(thread)
+            thread.start()
+
+    # Wait for all threads to complete
+    for done_event in done_events:
+        done_event.wait()
+
+    # Show success message
+    messagebox.showinfo("Success", "All templates have been processed successfully")
 
 
 def main():
