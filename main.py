@@ -1,13 +1,13 @@
 import csv
 import re
 import sys
-import tkinter
+import os
 import openpyxl
 import win32api
 import threading
 from pathlib import Path
 from docx import Document
-from tkinter import messagebox, ttk
+from tkinter import messagebox
 from tkinter import *  # from tkinter import Tk for Python 3.x
 from tkinter.filedialog import askopenfilename
 from tkinter.filedialog import askopenfilenames
@@ -23,8 +23,10 @@ printFiles = False
 
 encapsulation_char = "$"
 
+
 def createOutputIfNotExist():
     Path("./output").mkdir(parents=True, exist_ok=True)
+
 
 def loadData():
     Tk().withdraw()  # we don't want a full GUI, so keep the root window from appearing
@@ -49,7 +51,7 @@ def loadData():
     # Take the first row that contains the header as guide for what the columns are
     headers = data.pop(0)
     for header in headers:
-        dataListBox.insert(END, "$"+header+"$")
+        dataListBox.insert(END, "$" + header + "$")
     window.update()
 
     templatesBtn = Button(text="Load Templates", command=loadTemplates)
@@ -115,16 +117,24 @@ def updateXLSX(filePath, employe):
             for cell in row:
                 # Check if the cell contains any of the headers from the CSV file which are used as rempalcementkeys
                 for key in headers:
-                    comparer = encapsulation_char + key.lower() + encapsulation_char
+                    comparer = (
+                        encapsulation_char + key.lower() + encapsulation_char
+                    )
                     if str(cell.value).lower().find(comparer) != -1:
-                        remove_word = re.compile(re.escape(comparer), re.IGNORECASE)
+                        remove_word = re.compile(
+                            re.escape(comparer), re.IGNORECASE
+                        )
                         if employe[0] == "112132" and key == "emplNumEmploye":
                             print(key)
                         newValue = employe[headers.index(key)]
                         if key == "emplNaissance":
                             newValue = newValue.split("/")
                             newValue = (
-                                newValue[2] + "/" + newValue[1] + "/" + newValue[0]
+                                newValue[2]
+                                + "/"
+                                + newValue[1]
+                                + "/"
+                                + newValue[0]
                             )
                         elif (
                             key == "ipTauxHoraire"
@@ -139,40 +149,44 @@ def updateXLSX(filePath, employe):
     wb.save(outputFile)
     return outputFile
 
+
 def process_template(template, employe):
     if template.endswith(".xlsx"):
-        updateXLSX(template, employe)
+        file = updateXLSX(template, employe)
     elif template.endswith(".docx"):
-        updateWord(template, employe)
+        file = updateWord(template, employe)
     # elif template.endswith(".pdf"):
     #     outputFile = updatePDF(template, employe)
     else:
         messagebox.showerror("Error", "Invalid file format")
+        return
+    if printFiles and file:
+        # Print the file
+        full_path = os.path.abspath(file)
+        # Print the file
+        win32api.ShellExecute(0, "print", full_path, None, ".", 0)
+
 
 def executeUpdate():
     # create outputfolder if not exist
     createOutputIfNotExist()
-    
-    def worker(template, employe, done_event, progress_var):
+
+    def worker(template, employe, done_event):
         process_template(template, employe)
         done_event.set()
-        progress_var.set(progress_var.get() + 1)
 
     threads = []
     done_events = []
-    total_tasks = len(data) * len(templates)
-    
-    # Create a progress bar
-    progress_var = tkinter.IntVar()
-    progress_bar = ttk.Progressbar(window, maximum=total_tasks, variable=progress_var)
-    progress_bar.grid(row=3, column=0, columnspan=2, pady=10)
 
     # Iterate through the list of rows containing each employee's data
     for employe in data:
         for template in templates:
             done_event = threading.Event()
             done_events.append(done_event)
-            thread = threading.Thread(target=worker, args=(template, employe, done_event, progress_var))
+            thread = threading.Thread(
+                target=worker,
+                args=(template, employe, done_event),
+            )
             threads.append(thread)
             thread.start()
 
@@ -181,7 +195,9 @@ def executeUpdate():
         done_event.wait()
 
     # Show success message
-    messagebox.showinfo("Success", "All templates have been processed successfully")
+    messagebox.showinfo(
+        "Success", "All templates have been processed successfully"
+    )
 
 
 def main():
@@ -196,10 +212,10 @@ def main():
     dataLabel = Label(text="There are {} users".format(len(data)))
     dataLabel.grid(row=2, column=0)
 
-
-    c1 = Checkbutton(window, text='Print',variable=printFiles, onvalue=True, offvalue=False)
+    c1 = Checkbutton(
+        window, text="Print", variable=printFiles, onvalue=True, offvalue=False
+    )
     c1.grid(row=1, column=2)
-
 
     window.mainloop()
 
